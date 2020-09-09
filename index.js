@@ -10,7 +10,7 @@ const users = [
   { username: "Fredrico", password: "a" }
 ];
 
-app.get("/users", (request, response) => {
+app.get("/users", authorizeUser, (request, response) => {
   response.status(200).send(users);
 });
 
@@ -62,5 +62,12 @@ app.post("/authenticateuser", async (request, response) => {
     response.status(500).send(error);
   }
 });
+
+function authorizeUser(request, response, next) {
+  if (request.query.secret != "word123") {
+    return response.status(403).send({ message: "You are not authorized" });
+  }
+  next();
+}
 
 app.listen(PORT, () => console.log(`App is listenting on ${PORT}`));
