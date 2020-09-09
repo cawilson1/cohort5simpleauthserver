@@ -6,5 +6,65 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Blog Page</title>
   </head>
-  <body></body>
+  <body onload="getBlogPosts()">
+    <div>
+      <div><label for="un">username</label><input id="un" /></div>
+      <div>
+        <label for="pw">password</label><input type="password" id="pw" />
+      </div>
+      <button onclick="login()">Sign In</button>
+      <button onclick="getBlogPosts()">Get Blog Posts</button>
+      <button onclick="logout()">Log out</button>
+      <div id="blogs"></div>
+      <script>
+        async function login() {
+          let un = document.getElementById("un").value;
+          let pw = document.getElementById("pw").value;
+          try {
+            const response = await fetch(
+              "http://localhost:4000/authenticateuser",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  username: un,
+                  password: pw
+                })
+              }
+            );
+            let respJson = await response.json();
+            if (respJson.jwt) {
+              localStorage.setItem("jwt", respJson.jwt);
+              console.log("set in local storage");
+              window.location = "index.html";
+            } else {
+              console.log("no token found");
+            }
+            console.log(respJson);
+          } catch (error) {
+            console.log(error);
+          }
+        }
+        async function getBlogPosts() {
+          let jwt = localStorage.getItem("jwt");
+          const response = await fetch("http://localhost:4000/blogs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ token: jwt })
+          });
+          const respJson = await response.json();
+          console.log(respJson);
+          document.getElementById("blogs").innerHTML = JSON.stringify(respJson);
+        }
+        function logout() {
+          localStorage.removeItem("jwt");
+          window.location = "index.html";
+        }
+      </script>
+    </div>
+  </body>
 </html>

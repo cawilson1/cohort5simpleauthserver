@@ -1,11 +1,13 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
+const cors = require("cors");
 const PORT = 4000;
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 app.use(express.json());
+app.use(cors());
 
 const users = [
   {
@@ -34,7 +36,7 @@ app.get("/users", (request, response) => {
   response.status(200).send(users);
 });
 
-app.get("/blogs", authorizeUser, (request, response) => {
+app.post("/blogs", authorizeUser, (request, response) => {
   const username = request.user.username;
   const thisUsersBlogs = blogs.filter(blog => blog.user === username);
   response.status(200).send(thisUsersBlogs);
