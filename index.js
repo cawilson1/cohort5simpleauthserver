@@ -1,7 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const PORT = 4000;
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json());
 
@@ -52,9 +54,11 @@ app.post("/authenticateuser", async (request, response) => {
       return response.status(401).send({ message: "username does not exist" });
     }
     if (await bcrypt.compare(password, currentUser.password)) {
+      const user = { username: username };
+      const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
       return response
         .status(200)
-        .send({ message: "congrats, you have logged in!" });
+        .send({ jwt: accessToken, message: "congrats, you have logged in!" });
     } else {
       return response.status(401).send({ message: "incorrect password" });
     }
