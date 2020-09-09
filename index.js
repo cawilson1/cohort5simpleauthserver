@@ -8,24 +8,48 @@ const jwt = require("jsonwebtoken");
 app.use(express.json());
 
 const users = [
-  { username: "Todd", password: "specialSecret!" },
-  { username: "Fredrico", password: "a" }
+  {
+    username: "Todd",
+    password: "$2b$10$N/VJvYy0QtM5gxfJV7EtFuwEnaWcDaJfpXShlISDic0vuzCmmlp2G"
+  },
+  {
+    username: "Fredrico",
+    password: "$2b$10$YH6XItSk3DvyH6kbHSe.9OUWe1TeX27w5Xn1HMNZ7oblgnH2QCROK"
+  },
+  {
+    username: "Todd3",
+    password: "$2b$10$1BI.ajWOdIcu4KgBsWf7ZeXs1LvfzimA5ha.Ky7XTursY6crQM0Oq"
+  }
 ];
 
-app.get("/users", authorizeUser, (request, response) => {
+const blogs = [
+  { user: "Todd", text: "This is a blog" },
+  { user: "Todd3", text: "This is not a blog" },
+  { user: "Todd3", text: "This may not be a blog" },
+  { user: "Fredrico", text: "Cats" }
+];
+
+app.get("/users", (request, response) => {
+  console.log(request.user);
   response.status(200).send(users);
+});
+
+app.get("/blogs", authorizeUser, (request, response) => {
+  const username = request.user.username;
+  const thisUsersBlogs = blogs.filter(blog => blog.user === username);
+  response.status(200).send(thisUsersBlogs);
 });
 
 //create user and put username and HASHED (w/salt) pw in database
 app.post("/user", async (request, response) => {
   try {
-    console.log(request.body);
+    // console.log(request.body);
     let username = request.body.username;
     let password = request.body.password;
     let salt = await bcrypt.genSalt();
-    console.log("generated salt:", salt);
+    // console.log("generated salt:", salt);
     const hashedPassword = await bcrypt.hash(password, salt);
-    console.log("hashed password with salt", hashedPassword);
+    // console.log("hashed password with salt", hashedPassword);
 
     let user = { username, password: hashedPassword };
     users.push(user);
@@ -68,9 +92,18 @@ app.post("/authenticateuser", async (request, response) => {
 });
 
 function authorizeUser(request, response, next) {
-  if (request.query.secret != "word123") {
-    return response.status(403).send({ message: "You are not authorized" });
+  console.log(request.body);
+  const token = request.body.token;
+  if (token == null) {
+    console.log(token, "null token");
+    return response.status(401).send({ message: "No token sent" });
   }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+    if (err) return response.status(403).send({ message: err });
+    console.log("User is authorized");
+    request.user = user;
+    next();
+  });
   next();
 }
 
